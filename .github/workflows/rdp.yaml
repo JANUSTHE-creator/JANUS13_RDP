@@ -1,0 +1,25 @@
+name: rdp
+on:
+  workflow_dispatch:
+jobs:
+  rdp:
+    runs-on: windows-latest
+    timeout-minutes: 360
+    steps:
+      - name: Enable RDP + set password
+        shell: pwsh
+        run: |
+          Set-ItemProperty -Path 'HKLM:\System\CurrentControlSet\Control\Terminal Server' -Name "fDenyTSConnections" -Value 0
+          Enable-NetFirewallRule -DisplayGroup "Remote Desktop"
+          $pw = ConvertTo-SecureString "Janus2026!" -AsPlainText -Force
+          Set-LocalUser -Name "runneradmin" -Password $pw
+      - name: Join Tailscale
+        uses: tailscale/github-action@v3
+        with:
+          authkey: ${{ secrets.Tailscale_AUTH_KEY }}
+      - name: Show Tailscale IP
+        shell: pwsh
+        run: tailscale ip -4
+      - name: Keep alive
+        shell: pwsh
+        run: while ($true) { Start-Sleep -Seconds 60 }
